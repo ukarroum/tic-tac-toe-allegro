@@ -30,6 +30,9 @@ void initGame(ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue, int w, int
 
     al_clear_to_color(al_map_rgb(0, 0, 0));
 
+    if(!al_install_mouse())
+        error("al_install_keyboard()");
+
     /************************
      * ** Evenements ********
      * **********************
@@ -41,7 +44,7 @@ void initGame(ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue, int w, int
         error("al_create_event_queue");
 
     al_register_event_source(*queue, al_get_display_event_source(*display));
-
+    al_register_event_source(*queue, al_get_mouse_event_source());
     /*************************************
      * ***** Tracer les lignes blanches **
      * ***********************************
@@ -60,17 +63,69 @@ void initGame(ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue, int w, int
 }
 void loopGame(ALLEGRO_DISPLAY *display, ALLEGRO_EVENT_QUEUE *queue)
 {
-    while(1)
+    int fin = 1;
+    int onmove = 0;
+    while(fin)
     {
         ALLEGRO_EVENT event = {0};
 
         al_wait_for_event(queue, &event);
 
-        if(event.type == ALLEGRO_EVENT_DISPLAY_CLOSE)
-            break;
+        switch(event.type)
+        {
+            case ALLEGRO_EVENT_DISPLAY_CLOSE:
+                fin = 0;
+                break;
+            case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
+                if(event.mouse.button == 1)
+                {
+                    if(onmove%2 == 0)
+                        draw_motif(event.mouse.x / (GAME_WIDTH/3),
+                                   event.mouse.y / (GAME_HEIGHT/3),
+                                   GAME_WIDTH,
+                                   GAME_HEIGHT,
+                                   CROIX);
+                    else
+                        draw_motif(event.mouse.x / (GAME_WIDTH/3),
+                                   event.mouse.y / (GAME_HEIGHT/3),
+                                   GAME_WIDTH,
+                                   GAME_HEIGHT,
+                                   CERCLE);
+                    onmove++;
+                }
+                break;
+        }
     }
 }
 void destroyGame(ALLEGRO_DISPLAY **display)
 {
     al_destroy_display(*display);
+}
+void draw_motif(int x, int y, int w, int h, Motif motif)
+{
+    /*
+     * Dessine un motif (X ou O)
+     *
+     * x : ligne
+     * y : colonne
+     * w : largeur de la grille
+     * h : hauteur de la grille
+     */
+    if(motif == CROIX)
+        draw_x(w*0.1 + x*(w/3)*0.9, h*0.1 + y*(h/3)*0.9, (w/3)*0.90 + x*(w/3)*0.9, (h/3)*0.90 + y*(h/3)*0.9);
+    else if(motif == CERCLE)
+        al_draw_circle(w/6 + x*(w/3)*0.9, h/6 + y*(h/3), (w/6)*0.6, WHITE, 10);
+
+    al_flip_display();
+}
+void draw_x(int x1, int y1, int x2, int y2)
+{
+    /*
+     * Dessine un X
+     *
+     * (x1, y1) : cordonnées de l'extrémité haut gauche du x
+     * (x2, y2) : cordonnées de l'extrémité bas droite du x
+     */
+    al_draw_line(x1, y1, x2, y2, WHITE, 10);
+    al_draw_line(x2, y1, x1, y2, WHITE, 10);
 }
