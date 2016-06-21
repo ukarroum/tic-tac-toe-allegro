@@ -61,7 +61,7 @@ void initGame(ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue, int w, int
     al_flip_display();
 
 }
-void loopGame(ALLEGRO_DISPLAY *display, ALLEGRO_EVENT_QUEUE *queue)
+void loopGame(ALLEGRO_DISPLAY *display, ALLEGRO_EVENT_QUEUE *queue, char board[3][3])
 {
     int fin = 1;
     int onmove = 0;
@@ -79,19 +79,27 @@ void loopGame(ALLEGRO_DISPLAY *display, ALLEGRO_EVENT_QUEUE *queue)
             case ALLEGRO_EVENT_MOUSE_BUTTON_UP:
                 if(event.mouse.button == 1)
                 {
-                    if(onmove%2 == 0)
-                        draw_motif(event.mouse.x / (GAME_WIDTH/3),
-                                   event.mouse.y / (GAME_HEIGHT/3),
+                    if(onmove%2 == 0) {
+                        draw_motif(event.mouse.x / (GAME_WIDTH / 3),
+                                   event.mouse.y / (GAME_HEIGHT / 3),
                                    GAME_WIDTH,
                                    GAME_HEIGHT,
                                    CROIX);
-                    else
-                        draw_motif(event.mouse.x / (GAME_WIDTH/3),
-                                   event.mouse.y / (GAME_HEIGHT/3),
+                        board[event.mouse.x / (GAME_WIDTH / 3)][event.mouse.y / (GAME_HEIGHT / 3)] = 'X';
+                    }
+                    else {
+                        draw_motif(event.mouse.x / (GAME_WIDTH / 3),
+                                   event.mouse.y / (GAME_HEIGHT / 3),
                                    GAME_WIDTH,
                                    GAME_HEIGHT,
                                    CERCLE);
+                        board[event.mouse.x / (GAME_WIDTH / 3)][event.mouse.y / (GAME_HEIGHT / 3)] = 'O';
+                    }
                     onmove++;
+
+                    #ifdef DEBUG
+                        debugBoard(board);
+                    #endif
                 }
                 break;
         }
@@ -128,4 +136,29 @@ void draw_x(int x1, int y1, int x2, int y2)
      */
     al_draw_line(x1, y1, x2, y2, WHITE, 10);
     al_draw_line(x2, y1, x1, y2, WHITE, 10);
+}
+void debugBoard(char board[3][3])
+{
+    /*
+     * Affiche la grille du jeu sous une forme plus plaisante à l'oeil
+     * Pour faciliter le débogage
+     *
+     *  Ex :
+     *
+     *   X|O|
+     *    |X|
+     *   X| |O
+     */
+    int i, j;
+    for(i = 0; i < 3; i++)
+    {
+        for(j = 0; j < 3; j++)
+        {
+            printf("%c", board[i][j]);
+            if(j != 2)
+                printf("|");
+            else
+                printf("\n");
+        }
+    }
 }
