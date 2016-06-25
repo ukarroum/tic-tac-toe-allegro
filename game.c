@@ -16,6 +16,7 @@ char board[3][3] = {
 };
 char firstPlayer = 'X';
 ALLEGRO_FONT *openSans12 = NULL;
+Mode mode = SOLO;
 
 void error(const char *err)
 {
@@ -85,7 +86,7 @@ void initGame(ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue)
     al_flip_display();
 
 }
-void loopGame(ALLEGRO_DISPLAY *display, ALLEGRO_EVENT_QUEUE *queue, Mode mode)
+void loopGame(ALLEGRO_DISPLAY *display, ALLEGRO_EVENT_QUEUE *queue)
 {
     int scoreX = 0;
     int scoreO = 0;
@@ -121,8 +122,11 @@ void loopGame(ALLEGRO_DISPLAY *display, ALLEGRO_EVENT_QUEUE *queue, Mode mode)
                                    CERCLE);
                         board[event.mouse.y / (GAME_HEIGHT / 3)][event.mouse.x / (GAME_WIDTH / 3)] = 'O';
                     }
-
-                    if(checkWin())
+                    /* Deux cas se presentent:
+                     * 1 cas : Joueur contre joueur => La condition marche pour les deux
+                     * 2 cas : Joueur contre machine => cette condition ne teste que si le joueur a gagné
+                     * */
+                    if(checkWin(true))
                     {
                         al_show_native_message_box(display,"You Win !", "You Win !", "Vous avez gagné !",NULL,0);
                         if(onmove%2 == 0)
@@ -133,7 +137,30 @@ void loopGame(ALLEGRO_DISPLAY *display, ALLEGRO_EVENT_QUEUE *queue, Mode mode)
 
                         continue;
                     }
-                    onmove++;
+                    else if(checkFull())
+                    {
+                        al_show_native_message_box(display,"Draw !", "Draw !", "Egalite !",NULL,0);
+                        newGame(scoreX, scoreO);
+
+                        continue;
+                    }
+                    if(mode == SOLO)
+                    {
+                        int index = minimax();
+                        draw_motif(index % 3, index / 3, GAME_WIDTH, GAME_HEIGHT, CERCLE);
+                        board[index / 3][index % 3] = 'O';
+
+                        if(checkWin(true))
+                        {
+                            al_show_native_message_box(display,"You Lose !", "You Lose !", "Vous avez perdu :( !",NULL,0);
+                            scoreO++;
+                            newGame(scoreX, scoreO);
+
+                            continue;
+                        }
+                    }
+                    else
+                        onmove++;
 
                     #ifdef DEBUG
                         debugBoard();
@@ -200,7 +227,7 @@ void debugBoard()
         }
     }
 }
-bool checkWin()
+bool checkWin(bool draw)
 {
     /*
      * Permet de vérifier si un des deux joueurs à gagné
@@ -210,32 +237,50 @@ bool checkWin()
     for (i = 0; i < 3; i++)
     {
         if(board[i][0] != '-' && board[i][0] == board[i][1] && board[i][1] == board[i][2]) {
-            al_draw_line(GAME_WIDTH * 0.05, (GAME_HEIGHT/3) * (i + 0.5), GAME_WIDTH * 0.95, (GAME_HEIGHT/3) * (i + 0.5), WHITE,
+            if(draw) {
+                al_draw_line(GAME_WIDTH * 0.05, (GAME_HEIGHT/3) * (i + 0.5), GAME_WIDTH * 0.95, (GAME_HEIGHT/3) * (i + 0.5), WHITE,
                          10);
-            al_flip_display();
+                al_flip_display();
+            }
             return true;
         }
         if(board[0][i] != '-' && board[0][i] == board[1][i] && board[1][i] == board[2][i]) {
-            al_draw_line((GAME_WIDTH/3) * (i + 0.5), GAME_HEIGHT * 0.05, (GAME_WIDTH/3)  * (i + 0.5), GAME_HEIGHT * 0.95, WHITE,
-                         10);
-            al_flip_display();
+            if(draw) {
+                al_draw_line((GAME_WIDTH / 3) * (i + 0.5), GAME_HEIGHT * 0.05, (GAME_WIDTH / 3) * (i + 0.5),
+                             GAME_HEIGHT * 0.95, WHITE,
+                             10);
+                al_flip_display();
+            }
             return true;
         }
     }
     if(board[0][0] != '-' && board[0][0] == board[1][1] && board[1][1] == board[2][2]){
-        al_draw_line(GAME_WIDTH * 0.05, GAME_HEIGHT * 0.05, GAME_WIDTH * 0.95, GAME_HEIGHT * 0.95, WHITE,
-                     10);
-        al_flip_display();
+        if(draw) {
+            al_draw_line(GAME_WIDTH * 0.05, GAME_HEIGHT * 0.05, GAME_WIDTH * 0.95, GAME_HEIGHT * 0.95, WHITE,
+                         10);
+            al_flip_display();
+        }
         return true;
     }
     if(board[0][2] != '-' && board[0][2] == board[1][1] && board[1][1] == board[2][0]) {
-        al_draw_line(GAME_WIDTH * 0.95, GAME_HEIGHT * 0.05, GAME_WIDTH * 0.05, GAME_HEIGHT * 0.95, WHITE,
-                     10);
-        al_flip_display();
+        if(draw) {
+            al_draw_line(GAME_WIDTH * 0.95, GAME_HEIGHT * 0.05, GAME_WIDTH * 0.05, GAME_HEIGHT * 0.95, WHITE,
+                         10);
+            al_flip_display();
+        }
         return true;
     }
     return false;
 
+}
+bool checkFull()
+{
+    int i, j;
+    for(i = 0; i < 3; i++)
+        for(j = 0; j < 3; j++)
+            if(board[i][j] == '-')
+                return false;
+    return true;
 }
 void newGame(int scoreX, int scoreO)
 {
@@ -243,14 +288,16 @@ void newGame(int scoreX, int scoreO)
     for(i = 0; i < 3; i++)
         for(j = 0; j < 3; j++)
             board[i][j] = '-';
-    if(firstPlayer == 'X') {
-        firstPlayer = 'O';
-        onmove = 1;
-    }
-    else
-    {
-        firstPlayer = 'X';
-        onmove = 0;
+    if(mode == MULTI) {
+        if(firstPlayer == 'X') {
+            firstPlayer = 'O';
+            onmove = 1;
+        }
+        else
+        {
+            firstPlayer = 'X';
+            onmove = 0;
+        }
     }
 
     //Inistialisation de l'affichage
@@ -268,8 +315,90 @@ void newGame(int scoreX, int scoreO)
 }
 void updatesScorePlayers(int scoreX, int scoreO)
 {
-    al_draw_textf(openSans12, WHITE, SCREEN_WIDTH*0.1, GAME_HEIGHT + 10, 0, "Joueur X : %d", scoreX);
-    al_draw_textf(openSans12, WHITE, SCREEN_WIDTH*0.1, GAME_HEIGHT + 50, 0, "Joueur O : %d", scoreO);
+    if(mode == MULTI){
+        al_draw_textf(openSans12, WHITE, SCREEN_WIDTH*0.1, GAME_HEIGHT + 10, 0, "Joueur X : %d", scoreX);
+        al_draw_textf(openSans12, WHITE, SCREEN_WIDTH*0.1, GAME_HEIGHT + 50, 0, "Joueur O : %d", scoreO);
+    }
+    else{
+        al_draw_textf(openSans12, WHITE, SCREEN_WIDTH*0.1, GAME_HEIGHT + 10, 0, "Joueur : %d", scoreX);
+        al_draw_textf(openSans12, WHITE, SCREEN_WIDTH*0.1, GAME_HEIGHT + 50, 0, "Machine : %d", scoreO);
+    }
+
 
     al_flip_display();
+}
+int minimax()
+{
+    /****************************************
+     * Calcul le meilleur jeu pour la machine
+     * et renvoie l'indice de la case que la machine devra jouer
+     * pour gagner
+     *
+     * Les scores sont réparties comme suit :
+     *
+     * Gagner la partie : 10
+     * Partie nulle : 0
+     * Perdre la partie : -10
+     */
+    int i, j;
+    int bestMove = -20;
+    int bestI = 100, bestJ = 100;
+
+    for(i = 0; i < 3; i++)
+    {
+        for(j = 0; j < 3; j++)
+        {
+            if(board[i][j] != '-')
+                continue;
+
+            board[i][j] = 'O';
+            /********** Calcul du score par minimax *************/
+            if(score(1) > bestMove)
+            {
+                bestI = i;
+                bestJ = j;
+                bestMove = score(1);
+            }
+            /****************************************************/
+            board[i][j] = '-';
+
+        }
+    }
+    return bestI*3 + bestJ;
+}
+int score(int depth)
+{
+    int i, j, bestScore;
+    if(depth % 2 == 1)
+        bestScore = 20;
+    else
+        bestScore = -20;
+
+    if(checkWin(false))
+        return depth % 2 == 1 ? 10 : -10;
+    if(checkFull())
+        return 0;
+    for(i = 0; i < 3; i++)
+    {
+        for(j = 0; j < 3; j++)
+        {
+            if(board[i][j] != '-')
+                continue;
+
+            board[i][j] = depth % 2 == 1 ? 'X' : 'O';
+            /********** Calcul du score par minimax *************/
+            if(depth % 2 == 1 && score(depth + 1) < bestScore)
+            {
+                bestScore = score(depth + 1);
+            }
+            else if(depth % 2 == 0 && score(depth + 1) > bestScore)
+            {
+                bestScore = score(depth + 1);
+            }
+            /****************************************************/
+            board[i][j] = '-';
+        }
+    }
+
+    return bestScore;
 }
