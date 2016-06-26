@@ -43,9 +43,10 @@ void initGame(ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue)
 
     al_set_window_title(*display, "Tic Tac Toe");
 
-    al_clear_to_color(al_map_rgb(0, 0, 0));
-
     if(!al_install_mouse())
+        error("al_install_keyboard()");
+
+    if(!al_install_keyboard())
         error("al_install_keyboard()");
 
     if(!al_init_font_addon())
@@ -57,6 +58,7 @@ void initGame(ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue)
     openSans12 = al_load_ttf_font("/home/karroum/Projets/allegro/tic-tac-toe-allegro/fonts/OpenSans-Light.ttf", 24, 0);
     if(!openSans12)
         error("al_load_font()");
+
 
     /************************
      * ** Evenements ********
@@ -70,12 +72,41 @@ void initGame(ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue)
 
     al_register_event_source(*queue, al_get_display_event_source(*display));
     al_register_event_source(*queue, al_get_mouse_event_source());
+    al_register_event_source(*queue, al_get_keyboard_event_source());
+
     /*************************************
      * ***** Tracer les lignes blanches **
      * ***********************************
      */
     if(!al_init_primitives_addon())
         error("al_primitives_addon()");
+
+    drawMenu(*queue);
+    //drawGrid();
+
+}
+void drawMenu(ALLEGRO_EVENT_QUEUE *queue)
+{
+    ALLEGRO_FONT *openSans62;
+    openSans62 = al_load_ttf_font("/home/karroum/Projets/allegro/tic-tac-toe-allegro/fonts/OpenSans-Light.ttf", 62, 0);
+    if(!openSans62)
+        error("al_load_font()");
+
+    al_draw_text(openSans62, WHITE, SCREEN_WIDTH*0.1, SCREEN_HEIGHT*0.1, 0, "Tic Tac Toe");
+
+    al_draw_text(openSans12, WHITE, SCREEN_WIDTH*0.1, SCREEN_HEIGHT*0.5, 0, "1)    Solo : Easy");
+    al_draw_text(openSans12, WHITE, SCREEN_WIDTH*0.1, SCREEN_HEIGHT*0.6, 0, "2)    Solo : Medium");
+    al_draw_text(openSans12, WHITE, SCREEN_WIDTH*0.1, SCREEN_HEIGHT*0.7, 0, "3)    Solo : Impossible");
+
+    al_draw_text(openSans12, WHITE, SCREEN_WIDTH*0.1, SCREEN_HEIGHT*0.8, 0, "4)    Multiplayer");
+
+    al_flip_display();
+
+    loopMenu(queue);
+};
+void drawGrid()
+{
+    al_clear_to_color(al_map_rgb(0, 0, 0));
 
     al_draw_line(GAME_WIDTH/3, GAME_HEIGHT*0.05, GAME_WIDTH/3, GAME_HEIGHT*0.95, WHITE, 2);
     al_draw_line(2*(GAME_WIDTH/3), GAME_HEIGHT*0.05, 2*(GAME_WIDTH/3), GAME_HEIGHT*0.95, WHITE, 2);
@@ -88,7 +119,47 @@ void initGame(ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue)
     al_flip_display();
 
     srand(time(NULL));
+}
+void loopMenu(ALLEGRO_EVENT_QUEUE *queue)
+{
+    int fin = 1;
+    while(fin)
+    {
+        ALLEGRO_EVENT event = {0};
 
+        al_wait_for_event(queue, &event);
+
+        switch(event.type) {
+            case ALLEGRO_EVENT_DISPLAY_CLOSE:
+                fin = 0;
+                break;
+            case ALLEGRO_EVENT_KEY_DOWN:
+                if (event.keyboard.keycode == ALLEGRO_KEY_1) {
+                    mode = SOLO;
+                    diff = EASY;
+                    fin = 0;
+                    drawGrid();
+                }
+                else if (event.keyboard.keycode == ALLEGRO_KEY_2) {
+                    mode = SOLO;
+                    diff = MEDIUM;
+                    fin = 0;
+                    drawGrid();
+                }
+                else if (event.keyboard.keycode == ALLEGRO_KEY_3) {
+                    mode = SOLO;
+                    diff = IMPOSSIBLE;
+                    fin = 0;
+                    drawGrid();
+                }
+                else if (event.keyboard.keycode == ALLEGRO_KEY_4) {
+                    mode = MULTI;
+                    fin = 0;
+                    drawGrid();
+                }
+                break;
+        }
+    }
 }
 void loopGame(ALLEGRO_DISPLAY *display, ALLEGRO_EVENT_QUEUE *queue)
 {

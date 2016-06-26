@@ -39,6 +39,9 @@ typedef enum Diff Diff;
 
 void error(const char *err);
 void initGame(ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue);
+void drawGrid();
+void drawMenu(ALLEGRO_EVENT_QUEUE *queue);
+void loopMenu(ALLEGRO_EVENT_QUEUE *queue);
 void loopGame(ALLEGRO_DISPLAY *display, ALLEGRO_EVENT_QUEUE *queue);
 void destroyGame(ALLEGRO_DISPLAY **display);
 
