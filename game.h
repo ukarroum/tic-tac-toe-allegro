@@ -31,6 +31,11 @@ enum Mode
     SOLO, MULTI
 };
 typedef enum Mode Mode;
+enum Diff
+{
+    EASY, MEDIUM, IMPOSSIBLE
+};
+typedef enum Diff Diff;
 
 void error(const char *err);
 void initGame(ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue);
@@ -46,11 +51,12 @@ void newGame(int scoreX, int scoreO);
 void updatesScorePlayers(int scoreX, int scoreY);
 int minimax();
 int score(int depth);
+int easy();
+int medium();
 
 
 extern int onmove;
 extern char board[3][3];
-extern char firstPlayer;
 extern ALLEGRO_FONT *openSans12;
 extern Mode mode;
 

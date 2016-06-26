@@ -5,6 +5,8 @@
 #include <allegro5/allegro_ttf.h>
 
 #include <stdio.h>
+#include <time.h>
+#include <string.h>
 
 #include "game.h"
 
@@ -14,9 +16,9 @@ char board[3][3] = {
         {'-', '-', '-'},
         {'-', '-', '-'},
 };
-char firstPlayer = 'X';
 ALLEGRO_FONT *openSans12 = NULL;
 Mode mode = SOLO;
+Diff diff = MEDIUM;
 
 void error(const char *err)
 {
@@ -85,6 +87,8 @@ void initGame(ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue)
 
     al_flip_display();
 
+    srand(time(NULL));
+
 }
 void loopGame(ALLEGRO_DISPLAY *display, ALLEGRO_EVENT_QUEUE *queue)
 {
@@ -146,7 +150,15 @@ void loopGame(ALLEGRO_DISPLAY *display, ALLEGRO_EVENT_QUEUE *queue)
                     }
                     if(mode == SOLO)
                     {
-                        int index = minimax();
+                        int index;
+
+                        if(diff == EASY)
+                            index = easy();
+                        else if(diff == MEDIUM)
+                            index = medium();
+                        else if(diff == IMPOSSIBLE)
+                            index = minimax();
+
                         draw_motif(index % 3, index / 3, GAME_WIDTH, GAME_HEIGHT, CERCLE);
                         board[index / 3][index % 3] = 'O';
 
@@ -284,6 +296,7 @@ bool checkFull()
 }
 void newGame(int scoreX, int scoreO)
 {
+    static char firstPlayer = 'X';
     int i, j;
     for(i = 0; i < 3; i++)
         for(j = 0; j < 3; j++)
@@ -401,4 +414,103 @@ int score(int depth)
     }
 
     return bestScore;
+}
+int easy()
+{
+    /**************************************
+     * Le mode le plus facile
+     * Choisit des cases aléatoirement
+     * en vérifiant tout de meme qu'elles
+     * sont bel et bien vides
+     * ************************************
+     */
+    int r;
+    do {
+        r = random() % 9;
+    }while(board[r/3][r%3] != '-');
+
+    return r;
+
+}
+int medium()
+{
+    /**********************************
+     * Un mode interemediaire qui vérifie
+     * à chaque tour si il est possible
+     * de gagner ou d'empecher l'autre joueur de gagner
+     * **********************************
+     */
+
+    /********** Recherche de victoire ****************/
+    int i;
+    for(i = 0; i < 3; i++)
+    {
+        if(board[i][0] == '-' && board[i][1] == 'O' && board[i][2] == 'O')
+            return i*3 + 0;
+        if(board[i][0] == 'O' && board[i][1] == '-' && board[i][2] == 'O')
+            return i*3 + 1;
+        if(board[i][0] == 'O' && board[i][1] == 'O' && board[i][2] == '-')
+            return i*3 + 2;
+
+        if(board[0][i] == '-' && board[1][i] == 'O' && board[2][3] == 'O')
+            return 0*3 + i;
+        if(board[0][i] == 'O' && board[1][i] == '-' && board[2][3] == 'O')
+            return 1*3 + i;
+        if(board[0][i] == 'O' && board[1][i] == 'O' && board[2][3] == '-')
+            return 2*3 + i;
+
+    }
+
+    //Diagonales
+    if(board[0][0] == '-' && board[1][1] == 'O' && board[2][2] == 'O')
+        return 0*3 + 0;
+    if(board[0][0] == 'O' && board[1][1] == '-' && board[2][2] == 'O')
+        return 1*3 + 1;
+    if(board[0][0] == 'O' && board[1][1] == 'O' && board[2][2] == '-')
+        return 2*3 + 2;
+
+    if(board[0][2] == '-' && board[1][1] == 'O' && board[2][0] == 'O')
+        return 0*3 + 2;
+    if(board[0][2] == 'O' && board[1][1] == '-' && board[2][0] == 'O')
+        return 1*3 + 1;
+    if(board[0][2] == 'O' && board[1][1] == 'O' && board[2][0] == '-')
+        return 2*3 + 0;
+
+    /********** Impossible de gagner dans ce tour => Eviter de perdre ****************/
+    for(i = 0; i < 3; i++)
+    {
+
+        if(board[i][0] == '-' && board[i][1] == 'X' && board[i][2] == 'X')
+            return i*3 + 0;
+        if(board[i][0] == 'X' && board[i][1] == '-' && board[i][2] == 'X')
+            return i*3 + 1;
+        if(board[i][0] == 'X' && board[i][1] == 'X' && board[i][2] == '-')
+            return i*3 + 2;
+
+        if(board[0][i] == '-' && board[1][i] == 'X' && board[2][i] == 'X')
+            return 0*3 + i;
+        if(board[0][i] == 'X' && board[1][i] == '-' && board[2][i] == 'X')
+            return 1*3 + i;
+        if(board[0][i] == 'X' && board[1][i] == 'X' && board[2][i] == '-')
+            return 2*3 + i;
+
+    }
+
+    //Diagonales
+    if(board[0][0] == '-' && board[1][1] == 'X' && board[2][2] == 'X')
+        return 0*3 + 0;
+    if(board[0][0] == 'X' && board[1][1] == '-' && board[2][2] == 'X')
+        return 1*3 + 1;
+    if(board[0][0] == 'X' && board[1][1] == 'X' && board[2][2] == '-')
+        return 2*3 + 2;
+
+    if(board[0][2] == '-' && board[1][1] == 'X' && board[2][0] == 'X')
+        return 0*3 + 2;
+    if(board[0][2] == 'X' && board[1][1] == '-' && board[2][0] == 'X')
+        return 1*3 + 1;
+    if(board[0][2] == 'X' && board[1][1] == 'X' && board[2][0] == '-')
+        return 2*3 + 0;
+
+    /********* Arrivé là il est encore tot pour gagner ou éviter une défaite => Mouvement aléatoire ***********/
+    return easy();
 }
