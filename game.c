@@ -55,7 +55,7 @@ void initGame(ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue)
     if(!al_init_ttf_addon())
         error("al_init_ttf_addon()");
 
-    openSans12 = al_load_ttf_font("/home/karroum/Projets/allegro/tic-tac-toe-allegro/fonts/OpenSans-Light.ttf", 24, 0);
+    openSans12 = al_load_ttf_font("../fonts/OpenSans-Light.ttf", 24, 0);
     if(!openSans12)
         error("al_load_font()");
 
@@ -88,7 +88,7 @@ void initGame(ALLEGRO_DISPLAY **display, ALLEGRO_EVENT_QUEUE **queue)
 void drawMenu(ALLEGRO_EVENT_QUEUE *queue)
 {
     ALLEGRO_FONT *openSans62;
-    openSans62 = al_load_ttf_font("/home/karroum/Projets/allegro/tic-tac-toe-allegro/fonts/OpenSans-Light.ttf", 62, 0);
+    openSans62 = al_load_ttf_font("../fonts/OpenSans-Light.ttf", 62, 0);
     if(!openSans62)
         error("al_load_font()");
 

@@ -9,7 +9,7 @@
 #define GAME_HEIGHT 400
 #define SCREEN_WIDTH 400
 #define SCREEN_HEIGHT 500
-#define RESSOURCES_PATH
+#define RESSOURCES_PATH ..
 
 /*********************
  * *** Couleurs ******
